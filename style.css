@@ -385,11 +385,11 @@ button:hover {
   }
 
   /* Ajusta a lista para 1 coluna */
-  .lista {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-
+/* Ajusta a lista para 2 colunas no mobile, se couber */
+.lista {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 15px;
+}
   .btn-remover {
     width: 28px;
     height: 28px;
