@@ -1,211 +1,408 @@
+const firebaseConfig = {
+  apiKey: "AIzaSyDXZKqEav9k40ojrrhZuRO2ytUSE_qrCMw",
+  authDomain: "biblioteca-d7e7f.firebaseapp.com",
+  projectId: "biblioteca-d7e7f",
+  storageBucket: "biblioteca-d7e7f.firebasestorage.app",
+  messagingSenderId: "575199720910",
+  appId: "1:575199720910:web:a5711f7258e17ae9cb679f",
+  measurementId: "G-LHD08ZQ8J7"
+};
 
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
+let editandoId = null; // variável para guardar id do item sendo editado
 
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Biblioteca de Animes & Mangás</title>
+document.getElementById("filtro-genero").addEventListener("change", () => {
+  carregarListas(auth.currentUser.email);
+});
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+const toggleThemeBtn = document.getElementById("toggle-theme");
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-</head>
-<body>
-  <div class="container">
-    <!-- Login -->
-    <div id="login" class="card login-card">
-      <h2>Login</h2>
-      <input type="email" id="email" placeholder="Email" />
-      <input type="password" id="password" placeholder="Senha" />
-      <button onclick="login()">Entrar</button>
-    </div>
+function atualizarEmoji(tema) {
+  toggleThemeBtn.textContent = tema === "dark" ? "☀️" : "🌙";
+}
 
-    <!-- App (inicialmente escondido) -->
-    <div id="app" class="hidden">
-      <div class="header">
-        <h1>Biblioteca de Animes & Mangás</h1>
-        
-        <div class="header-actions">
+toggleThemeBtn.addEventListener("click", () => {
+  const atual = document.documentElement.getAttribute("data-theme");
+  const novoTema = atual === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", novoTema);
+  localStorage.setItem("tema", novoTema);
+  atualizarEmoji(novoTema);
+});
+
+window.onload = () => {
+  const temaSalvo = localStorage.getItem("tema") || "light";
+  document.documentElement.setAttribute("data-theme", temaSalvo);
+  atualizarEmoji(temaSalvo);
+};
+
+function login() {
+  const email = document.getElementById("email").value;
+  const senha = document.getElementById("password").value;
+  auth.signInWithEmailAndPassword(email, senha)
+    .then(() => {
+      document.getElementById("login").classList.add("hidden");
+      document.getElementById("app").classList.remove("hidden");
+      document.getElementById("user-email").innerText = email;
+      // Removida a chamada para carregarListas aqui para evitar duplicação
+    })
+    .catch(e => alert(e.message));
+}
+
+function logout() {
+  auth.signOut().then(() => location.reload());
+}
+
+function adicionar() {
+  const nome = document.getElementById("nome").value.trim();
+  const categoria = document.getElementById("categoria").value;
+  const genero = document.getElementById("genero").value;
+  const avaliacao = parseFloat(document.getElementById("avaliacao").value);
+  const comentario = document.getElementById("comentario").value.trim();
+  const imagemFileInput = document.getElementById("imagemFile");
+  const imagemFile = imagemFileInput.files[0];
+
+  if (!nome) {
+    alert("Por favor, preencha o nome.");
+    return;
+  }
+  if (avaliacao < 0 || avaliacao > 5 || isNaN(avaliacao)) {
+    alert("Avaliação deve ser um número entre 0 e 5.");
+    return;
+  }
+
+  if (editandoId) {
+    // Editar existente
+    if (imagemFile) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const imagemBase64 = e.target.result;
+        atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario, imagem: imagemBase64 });
+      };
+      reader.readAsDataURL(imagemFile);
+    } else {
+      // Não atualiza imagem se não selecionou nova
+      atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario });
+    }
+  } else {
+    // Adicionar novo
+  // Adicionar novo
+if (!imagemFile) {
+  alert("Por favor, selecione uma imagem.");
+  return;
+}
+const reader = new FileReader();
+reader.onload = function (e) {
+  const imagemBase64 = e.target.result;
+
+  const doc = {
+    nome,
+    categoria,
+    genero,
+    avaliacao,
+    comentario,
+    imagem: imagemBase64,
+    userEmail: auth.currentUser.email,
+    capitulos: parseInt(document.getElementById("capitulos").value) || 0
+  };
+
+  db.collection("animes").add(doc)
+    .then(() => {
+      alert("Adicionado com sucesso!");
+      limparFormulario();
+
+      // FECHA O FORMULÁRIO
+
+      carregarListas(auth.currentUser.email);
+    })
+    .catch(e => alert("Erro ao adicionar: " + e.message));
+};
+reader.readAsDataURL(imagemFile);
+  }
+}
+
+function atualizarDocumento(id, dados) {
+  db.collection("animes").doc(id).update(dados)
+    .then(() => {
+      alert("Atualizado com sucesso!");
+      limparFormulario();
+      editandoId = null;
+      document.getElementById("form-title").innerText = "Adicionar Novo";
+      document.getElementById("btn-submit").innerText = "Adicionar";
+      document.getElementById("btn-cancelar").classList.add("hidden");
+
+      // FECHA O FORMULÁRIO APÓS EDITAR
+      document.getElementById("formulario-adicionar").classList.add("hidden");
+
+      carregarListas(auth.currentUser.email);
+    })
+    .catch(e => alert("Erro ao atualizar: " + e.message));
+}
+function carregarListas(meuEmail) {
+  const filtroGenero = document.getElementById("filtro-genero").value;
+  db.collection("animes").where("userEmail", "==", meuEmail).get().then(snapshotUserItems => {
+    const minhaLista = document.getElementById("minha-lista");
+    const outraLista = document.getElementById("outra-lista");
+    minhaLista.innerHTML = "";
+    outraLista.innerHTML = "";
+
+    // Mostrar/esconder botão remover tudo
+    const btnRemoverTudo = document.getElementById("btn-remover-tudo");
+    if (btnRemoverTudo) {
+      if (snapshotUserItems.size > 0) {
+        btnRemoverTudo.classList.remove("hidden");
+      } else {
+        btnRemoverTudo.classList.add("hidden");
+      }
+    }
+
+    // Agora carrega toda a lista ordenada pelo nome
+    db.collection("animes")
+      .orderBy("nome") // ← aqui garantimos a ordem alfabética pelo campo "nome"
+      .get()
+      .then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const id = doc.id;
+
+          if (filtroGenero && data.genero !== filtroGenero) return;
+
+          function pegarNomeDoEmail(email) {
+            if (!email) return "";
+            const username = email.split("@")[0];
+            return username.split(/[\.\_\-\s]/)[0];
+          }
+
+          const nomeUsuario = pegarNomeDoEmail(data.userEmail);
+
+          const card = `
+            <div class="anime-card" onclick="event.stopPropagation()">
+              ${data.userEmail === meuEmail ? `
+                <button class="btn-remover hidden" onclick="removerAnime('${id}')">✖️</button>
+                <button class="btn-editar hidden" onclick="editarAnime('${id}')">Editar</button>
+              ` : ""}
           
-          <button onclick="toggleFormulario()">Adicionar Titulos</button>
-          <button onclick="toggleImportarLista()">Importar Lista</button>
-        </div>
-      
-        <div class="user-controls">
-          <button onclick="logout()">Sair</button>
-          <button id="toggle-theme">🌙</button>
-        </div>
-      </div>
+              ${data.imagem ? `<img src="${data.imagem}" alt="${data.nome}" />` : `<div class="sem-imagem"></div>`}
+              <h3>Nome: ${data.nome}</h3>
+          
+              <div class="detalhes-extra hidden" id="detalhes-${id}">
+                <p><strong>Categoria:</strong> ${data.categoria}</p>
+                <p><strong>Gênero:</strong> ${data.genero}</p>
+                <p><strong>Avaliação:</strong> ${gerarEstrelas(data.avaliacao)}</p>
+                <p><strong>Comentário:</strong> ${data.comentario}</p>
+                <p><strong>Capítulos:</strong> ${data.capitulos}</p>
+                <p><strong>Utilizador:</strong> ${nomeUsuario}</p>
+              </div>
+          
+              <button class="btn-expandir" onclick="toggleDetalhes('${id}')">⋯</button>
+            </div>
+          `;
 
-      <!-- Formulário de adicionar -->
-      <div class="form card hidden" id="formulario-adicionar">
-        <h2 id="form-title">Adicionar Novo</h2>
-        <input type="text" id="nome" placeholder="Nome do anime/mangá" />
-        <select id="categoria">
-          <option value="anime">Anime</option>
-          <option value="manga">Mangá</option>
-        </select>
-        <!-- Gênero (copiado do original) -->
-        <select id="genero">
-          <option value="">-- Selecione o gênero --</option>
-          <option value="Ação / Action">Ação / Action</option>
-          <option value="Aventura / Adventure">Aventura / Adventure</option>
-          <option value="Adulto / Adult">Adulto / Adult</option>
-          <option value="Bissexual / Bisexual">Bissexual / Bisexual</option>
-          <option value="Comédia / Comedy">Comédia / Comedy</option>
-          <option value="Adaptações de Quadrinhos / Comics Adaptations">Adaptações de Quadrinhos / Comics Adaptations</option>
-          <option value="Crescimento Pessoal / Coming-of-age">Crescimento Pessoal / Coming-of-age</option>
-          <option value="Detetive / Mistério / Detective / Mystery">Detetive / Mistério / Detective / Mystery</option>
-          <option value="Dōjinshi (Autopublicado) / Dōjinshi (Self-Published)">Dōjinshi (Autopublicado) / Dōjinshi (Self-Published)</option>
-          <option value="Drama / Drama">Drama / Drama</option>
-          <option value="Ecchi / Erótico / Ecchi / Erotic">Ecchi / Erótico / Ecchi / Erotic</option>
-          <option value="Fantasia (inclui Isekai) / Fantasy (incl. Isekai)">Fantasia (inclui Isekai) / Fantasy (incl. Isekai)</option>
-          <option value="Gender Bender / Gender Bender">Gender Bender / Gender Bender</option>
-          <option value="Novelas Gráficas / Graphic Novels">Novelas Gráficas / Graphic Novels</option>
-          <option value="Harem / Harem">Harem / Harem</option>
-          <option value="Histórico / Ficção Histórica / Histórias Alternativas / Historical / Alternative History">Histórico / Ficção Histórica / Histórias Alternativas / Historical / Alternative History</option>
-          <option value="Horror / Horror">Horror / Horror</option>
-          <option value="Educacional / Gakushu / Educational / Gakushu">Educacional / Gakushu / Educational / Gakushu</option>
-          <option value="Humorístico / Humorous">Humorístico / Humorous</option>
-          <option value="Legal / Legal">Legal / Legal</option>
-          <option value="Médico / Medical">Médico / Medical</option>
-          <option value="Mágico / Garota Mágica / Magical Girl">Mágico / Garota Mágica / Magical Girl</option>
-          <option value="Artes Marciais / Martial Arts">Artes Marciais / Martial Arts</option>
-          <option value="Mecha (Máquinas e Robôs) / Mecha (Robots & Machines)">Mecha (Máquinas e Robôs) / Mecha (Robots & Machines)</option>
-          <option value="Monstro / Kaiju / Monster / Kaiju">Monstro / Kaiju / Monster / Kaiju</option>
-          <option value="Não-ficção / Non-fiction">Não-ficção / Non-fiction</option>
-          <option value="Paranormal / Paranormal">Paranormal / Paranormal</option>
-          <option value="Paródia / Parody">Paródia / Parody</option>
-          <option value="Pornográfico / Pornographic">Pornográfico / Pornographic</option>
-          <option value="Psicológico / Psychological">Psicológico / Psychological</option>
-          <option value="Queer / Queer">Queer / Queer</option>
-          <option value="Religioso / Religious">Religioso / Religious</option>
-          <option value="Romance / Romance">Romance / Romance</option>
-          <option value="Comédia Romântica / Romantic Comedy">Comédia Romântica / Romantic Comedy</option>
-          <option value="Samurai / Samurai">Samurai / Samurai</option>
-          <option value="Escolar / School">Escolar / School</option>
-          <option value="Ficção Científica (inclui Cyberpunk) / Science Fiction (incl. Cyberpunk)">Ficção Científica (inclui Cyberpunk) / Science Fiction (incl. Cyberpunk)</option>
-          <option value="Shōjo-ai (Amor entre Garotas) / Shōjo-ai (Girls' Love)">Shōjo-ai (Amor entre Garotas) / Shōjo-ai (Girls' Love)</option>
-          <option value="Shōnen-ai (Amor entre Garotos) / Shōnen-ai (Boys' Love)">Shōnen-ai (Amor entre Garotos) / Shōnen-ai (Boys' Love)</option>
-          <option value="Vida Cotidiana / Slice of Life">Vida Cotidiana / Slice of Life</option>
-          <option value="Questões Sociais / Social Issues">Questões Sociais / Social Issues</option>
-          <option value="Esportes / Sports">Esportes / Sports</option>
-          <option value="Espião / Spy">Espião / Spy</option>
-          <option value="Super-herói / Superhero">Super-herói / Superhero</option>
-          <option value="Sobrenatural / Supernatural">Sobrenatural / Supernatural</option>
-          <option value="Suspense / Suspense">Suspense / Suspense</option>
-          <option value="Tragédia / Tragedy">Tragédia / Tragedy</option>
-          <option value="Transgênero / Transgender">Transgênero / Transgender</option>
-          <option value="Underground / Underground">Underground / Underground</option>
-          <option value="Guerra / War">Guerra / War</option>
-          <option value="Sem Palavras / Wordless">Sem Palavras / Wordless</option>
-          <option value="Yaoi / Yaoi">Yaoi / Yaoi</option>
-          <option value="Yuri / Yuri">Yuri / Yuri</option>
-        </select>
+          if (data.userEmail === meuEmail) {
+            minhaLista.insertAdjacentHTML("beforeend", card);
+          } else {
+            outraLista.insertAdjacentHTML("beforeend", card);
+          }
+        });
+      });
+  });
+}
 
-        <label for="avaliacao"></label>
-        <input type="number" id="avaliacao" min="0" max="5" step="0.1" placeholder="Avaliação (0-5)" />
-        <input type="text" id="comentario" placeholder="Comentário" />
-        <input type="number" id="capitulos" placeholder="Capítulos" min="0" />
-        <input type="file" id="imagemFile" accept="image/*" />
-        <button id="btn-submit" onclick="adicionar()">Adicionar</button>
-        <button id="btn-cancelar" class="hidden" onclick="cancelarEdicao()">Cancelar</button>
-      </div>
+function toggleDetalhes(id) {
+  const detalhes = document.getElementById(`detalhes-${id}`);
+  detalhes.classList.toggle("hidden");
 
-      <!-- Importar Lista -->
-      <div id="importar-lista" class="hidden" style="margin: 20px 0;">
-        <h2>Importar Lista</h2>
-        <textarea id="textarea-importar" rows="6" placeholder="Digite um nome por linha..." style="width: 100%;"></textarea>
-        <br />
-        <button onclick="importarListaRapida()">Importar para Minha Lista</button>
-      </div>
+  // Mostra/esconde os botões editar e remover dentro do card
+  const card = detalhes.closest('.anime-card');
+  const btnRemover = card.querySelector('.btn-remover');
+  const btnEditar = card.querySelector('.btn-editar');
 
-      <!-- Filtro -->
-      <div class="card">
-        <h2>Filtrar por Gênero</h2>
-        <select id="filtro-genero">
-         
-            <option value="">-- Todos --</option>
-              <option value="Ação / Action">Ação / Action</option>
-              <option value="Aventura / Adventure">Aventura / Adventure</option>
-              <option value="Adulto / Adult">Adulto / Adult</option>
-              <option value="Bissexual / Bisexual">Bissexual / Bisexual</option>
-              <option value="Comédia / Comedy">Comédia / Comedy</option>
-              <option value="Adaptações de Quadrinhos / Comics Adaptations">Adaptações de Quadrinhos / Comics Adaptations</option>
-              <option value="Crescimento Pessoal / Coming-of-age">Crescimento Pessoal / Coming-of-age</option>
-              <option value="Detetive / Mistério / Detective / Mystery">Detetive / Mistério / Detective / Mystery</option>
-              <option value="Dōjinshi (Autopublicado) / Dōjinshi (Self-Published)">Dōjinshi (Autopublicado) / Dōjinshi (Self-Published)</option>
-              <option value="Drama / Drama">Drama / Drama</option>
-              <option value="Ecchi / Erótico / Ecchi / Erotic">Ecchi / Erótico / Ecchi / Erotic</option>
-              <option value="Fantasia (inclui Isekai) / Fantasy (incl. Isekai)">Fantasia (inclui Isekai) / Fantasy (incl. Isekai)</option>
-              <option value="Gender Bender / Gender Bender">Gender Bender / Gender Bender</option>
-              <option value="Novelas Gráficas / Graphic Novels">Novelas Gráficas / Graphic Novels</option>
-              <option value="Harem / Harem">Harem / Harem</option>
-              <option value="Histórico / Ficção Histórica / Histórias Alternativas / Historical / Alternative History">Histórico / Ficção Histórica / Histórias Alternativas / Historical / Alternative History</option>
-              <option value="Horror / Horror">Horror / Horror</option>
-              <option value="Educacional / Gakushu / Educational / Gakushu">Educacional / Gakushu / Educational / Gakushu</option>
-              <option value="Humorístico / Humorous">Humorístico / Humorous</option>
-              <option value="Legal / Legal">Legal / Legal</option>
-              <option value="Médico / Medical">Médico / Medical</option>
-              <option value="Mágico / Garota Mágica / Magical Girl">Mágico / Garota Mágica / Magical Girl</option>
-              <option value="Artes Marciais / Martial Arts">Artes Marciais / Martial Arts</option>
-              <option value="Mecha (Máquinas e Robôs) / Mecha (Robots & Machines)">Mecha (Máquinas e Robôs) / Mecha (Robots & Machines)</option>
-              <option value="Monstro / Kaiju / Monster / Kaiju">Monstro / Kaiju / Monster / Kaiju</option>
-              <option value="Não-ficção / Non-fiction">Não-ficção / Non-fiction</option>
-              <option value="Paranormal / Paranormal">Paranormal / Paranormal</option>
-              <option value="Paródia / Parody">Paródia / Parody</option>
-              <option value="Pornográfico / Pornographic">Pornográfico / Pornographic</option>
-              <option value="Psicológico / Psychological">Psicológico / Psychological</option>
-              <option value="Queer / Queer">Queer / Queer</option>
-              <option value="Religioso / Religious">Religioso / Religious</option>
-              <option value="Romance / Romance">Romance / Romance</option>
-              <option value="Comédia Romântica / Romantic Comedy">Comédia Romântica / Romantic Comedy</option>
-              <option value="Samurai / Samurai">Samurai / Samurai</option>
-              <option value="Escolar / School">Escolar / School</option>
-              <option value="Ficção Científica (inclui Cyberpunk) / Science Fiction (incl. Cyberpunk)">Ficção Científica (inclui Cyberpunk) / Science Fiction (incl. Cyberpunk)</option>
-              <option value="Shōjo-ai (Amor entre Garotas) / Shōjo-ai (Girls' Love)">Shōjo-ai (Amor entre Garotas) / Shōjo-ai (Girls' Love)</option>
-              <option value="Shōnen-ai (Amor entre Garotos) / Shōnen-ai (Boys' Love)">Shōnen-ai (Amor entre Garotos) / Shōnen-ai (Boys' Love)</option>
-              <option value="Vida Cotidiana / Slice of Life">Vida Cotidiana / Slice of Life</option>
-              <option value="Questões Sociais / Social Issues">Questões Sociais / Social Issues</option>
-              <option value="Esportes / Sports">Esportes / Sports</option>
-              <option value="Espião / Spy">Espião / Spy</option>
-              <option value="Super-herói / Superhero">Super-herói / Superhero</option>
-              <option value="Sobrenatural / Supernatural">Sobrenatural / Supernatural</option>
-              <option value="Suspense / Suspense">Suspense / Suspense</option>
-              <option value="Tragédia / Tragedy">Tragédia / Tragedy</option>
-              <option value="Transgênero / Transgender">Transgênero / Transgender</option>
-              <option value="Underground / Underground">Underground / Underground</option>
-              <option value="Guerra / War">Guerra / War</option>
-              <option value="Sem Palavras / Wordless">Sem Palavras / Wordless</option>
-              <option value="Yaoi / Yaoi">Yaoi / Yaoi</option>
-              <option value="Yuri / Yuri">Yuri / Yuri</option>
-            </select>
-        </select>
-      </div>
+  if (btnRemover && btnEditar) {
+    const isHidden = btnRemover.classList.contains('hidden');
+    if (isHidden) {
+      btnRemover.classList.remove('hidden');
+      btnEditar.classList.remove('hidden');
+    } else {
+      btnRemover.classList.add('hidden');
+      btnEditar.classList.add('hidden');
+    }
+  }
+}
 
-      <!-- Listas -->
-      <div class="listas">
-        <div class="card">
-          <h2>Lista de: <span id="user-email"></span></h2>
-        
-          <button id="btn-remover-tudo" class="hidden" onclick="removerTudo()">Remover Tudo</button>
-          <div id="minha-lista" class="lista"></div>
-        </div>
+function removerAnime(id) {
+  if (confirm("Tem certeza que deseja remover este item?")) {
+    db.collection("animes").doc(id).delete()
+      .then(() => carregarListas(auth.currentUser.email))
+      .catch(e => alert("Erro ao remover: " + e.message));
+  }
+}
+function editarAnime(id) {
+  db.collection("animes").doc(id).get()
+    .then(doc => {
+      if (!doc.exists) return alert("Item não encontrado");
+      const data = doc.data();
 
-        <div class="card">
-          <h2>👥 Lista de Outro Utilizador</h2>
-          <div id="outra-lista" class="lista"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+      editandoId = id;
+      document.getElementById("nome").value = data.nome;
+      document.getElementById("categoria").value = data.categoria;
+      document.getElementById("genero").value = data.genero;
+      document.getElementById("avaliacao").value = data.avaliacao;
+      document.getElementById("comentario").value = data.comentario;
+      document.getElementById("capitulos").value = data.capitulos || 0;
 
-  <script src="script.js"></script>
-</body>
-</html>
+      document.getElementById("form-title").innerText = "Editar Item";
+      document.getElementById("btn-submit").innerText = "Salvar";
+      document.getElementById("btn-cancelar").classList.remove("hidden");
+
+      // <- ADICIONE ESTA LINHA:
+      document.getElementById("formulario-adicionar").classList.remove("hidden");
+
+      // Scroll suave para o topo
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    })
+    .catch(e => alert("Erro ao carregar item: " + e.message));
+}
+
+function cancelarEdicao() {
+  editandoId = null;
+  limparFormulario();
+  document.getElementById("form-title").innerText = "Adicionar Novo";
+  document.getElementById("btn-submit").innerText = "Adicionar";
+  document.getElementById("btn-cancelar").classList.add("hidden");
+
+  // FECHA O FORMULÁRIO
+  document.getElementById("formulario-adicionar").classList.add("hidden");
+}
+
+function limparFormulario() {
+  document.getElementById("nome").value = "";
+  document.getElementById("categoria").value = "anime";
+  document.getElementById("genero").value = "";
+  document.getElementById("avaliacao").value = "";
+  document.getElementById("comentario").value = "";
+  document.getElementById("imagemFile").value = "";
+  document.getElementById("capitulos").value = "";
+}
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    document.getElementById("user-email").innerText = user.email;
+    carregarListas(user.email);
+  } else {
+    document.getElementById("login").classList.remove("hidden");
+    document.getElementById("app").classList.add("hidden");
+  }
+});
+
+function importarListaRapida() {
+  const textarea = document.getElementById("textarea-importar");
+  const linhas = textarea.value.split("\n").map(l => l.trim()).filter(l => l !== "");
+
+  if (linhas.length === 0) {
+    alert("Insira pelo menos um nome.");
+    return;
+  }
+
+  const userEmail = auth.currentUser.email;
+
+  const promessas = linhas.map(linhaOriginal => {
+    let linha = linhaOriginal.replace(/&/g, "and"); // Substitui & por "and"
+    
+    // Regex para capturar nome + capítulo opcional
+    const match = linha.match(/(.*?)(?:\s+(?:cap|ch|chap|chapter|ep|side|pag|v\d+)?\.?\s*(\d+(\.\d+)?))?$/i);
+
+    let nome = linha;
+    let capitulos = 0;
+
+    if (match) {
+      nome = match[1].trim();
+      if (match[2]) {
+        capitulos = parseFloat(match[2]);
+      }
+    }
+
+    const doc = {
+      nome,
+      categoria: "",
+      genero: "",
+      avaliacao: "",
+      comentario: "",
+      imagem: "", // padrão se não tiver imagem
+      userEmail,
+      capitulos
+    };
+
+    return db.collection("animes").add(doc);
+  });
+
+  Promise.all(promessas)
+    .then(() => {
+      alert("Importação concluída!");
+      textarea.value = "";
+      carregarListas(userEmail);
+    })
+    .catch(e => alert("Erro na importação: " + e.message));
+}
+
+function removerTudo() {
+  const userEmail = auth.currentUser.email;
+  if (!confirm("Tem certeza que deseja remover TODOS os itens da sua lista? Essa ação não pode ser desfeita.")) {
+    return;
+  }
+
+  const btn = document.getElementById("btn-remover-tudo");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "Removendo...";
+  }
+
+  db.collection("animes")
+    .where("userEmail", "==", userEmail)
+    .get()
+    .then(snapshot => {
+      const batch = db.batch();
+      snapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+
+      return batch.commit();
+    })
+    .then(() => {
+      alert("Todos os itens foram removidos com sucesso!");
+      carregarListas(userEmail);
+    })
+    .catch(e => alert("Erro ao remover todos os itens: " + e.message))
+    .finally(() => {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = "Remover Tudo";
+      }
+    });
+}
+
+function toggleFormulario() {
+  const form = document.getElementById("formulario-adicionar");
+  form.classList.toggle("hidden");
+}
+
+function toggleImportarLista() {
+  const importar = document.getElementById("importar-lista");
+  importar.classList.toggle("hidden");
+}
+function gerarEstrelas(avaliacao) {
+  const estrelasMax = 5;
+  let estrelasValor = avaliacao;  // avaliação já de 0 a 5
+
+  // percentual para o gradiente
+  const percent = (estrelasValor / estrelasMax) * 100;
+
+  const div = document.createElement('div');
+  div.className = 'Stars';
+  div.style.setProperty('--percent', percent + '%');
+
+  return div.outerHTML;
+}
