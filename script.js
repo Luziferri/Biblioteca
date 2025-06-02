@@ -73,19 +73,18 @@ function adicionar() {
     alert("Avaliação deve ser um número entre 0 e 5.");
     return;
   }
-
   if (editandoId) {
-    // Editar existente
+    const link = document.getElementById("link").value.trim();
+  
     if (imagemFile) {
       const reader = new FileReader();
       reader.onload = function (e) {
         const imagemBase64 = e.target.result;
-        atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario, imagem: imagemBase64 });
+        atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario, imagem: imagemBase64, link });
       };
       reader.readAsDataURL(imagemFile);
     } else {
-      // Não atualiza imagem se não selecionou nova
-      atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario });
+      atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario, link });
     }
   } else {
     // Adicionar novo
@@ -258,19 +257,18 @@ function editarAnime(id) {
       document.getElementById("avaliacao").value = data.avaliacao;
       document.getElementById("comentario").value = data.comentario;
       document.getElementById("capitulos").value = data.capitulos || 0;
+      document.getElementById("link").value = data.link || ""; // <<< aqui
 
       document.getElementById("form-title").innerText = "Editar Item";
       document.getElementById("btn-submit").innerText = "Salvar";
       document.getElementById("btn-cancelar").classList.remove("hidden");
-
-      // <- ADICIONE ESTA LINHA:
       document.getElementById("formulario-adicionar").classList.remove("hidden");
 
-      // Scroll suave para o topo
       window.scrollTo({ top: 0, behavior: 'smooth' });
     })
     .catch(e => alert("Erro ao carregar item: " + e.message));
 }
+
 
 function cancelarEdicao() {
   editandoId = null;
