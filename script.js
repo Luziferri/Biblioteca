@@ -145,6 +145,9 @@ function atualizarDocumento(id, dados) {
     .catch(e => alert("Erro ao atualizar: " + e.message));
 }
 function carregarListas(meuEmail) {
+  const loader = document.getElementById("loader");
+  loader.classList.remove("hidden"); // Mostrar loader
+
   const filtroGenero = document.getElementById("filtro-genero").value;
   db.collection("animes").where("userEmail", "==", meuEmail).get().then(snapshotUserItems => {
     const minhaLista = document.getElementById("minha-lista");
@@ -221,14 +224,18 @@ function carregarListas(meuEmail) {
           }
         });
 
-        // Atualizar as contagens na interface
+        // Atualizar contagens
         document.getElementById("contagem-animes").textContent = totalAnimes;
         document.getElementById("contagem-mangas").textContent = totalMangas;
         document.getElementById("contagem-animes-outra").textContent = totalAnimesOutra;
         document.getElementById("contagem-mangas-outra").textContent = totalMangasOutra;
+      })
+      .finally(() => {
+        loader.classList.add("hidden"); // Esconder loader
       });
   });
 }
+
 
 
 function toggleDetalhes(id) {
