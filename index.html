@@ -194,14 +194,19 @@
       <!-- Listas -->
       <div class="listas">
         <div class="card">
-          <h2>Lista de: <span id="user-email"></span></h2>
-        
+          <h2>
+            Lista de: <span id="user-email"></span> 
+            (<span id="contagem-animes"></span> animes, <span id="contagem-mangas"></span> mangás)
+          </h2>
+                  
           <button id="btn-remover-tudo" class="hidden" onclick="removerTudo()">Remover Tudo</button>
           <div id="minha-lista" class="lista"></div>
         </div>
 
         <div class="card">
           <h2>👥 Lista de Outro Utilizador</h2>
+          (<span id="contagem-animes-outra"></span> animes, <span id="contagem-mangas-outra"></span> mangás)
+
           <div id="outra-lista" class="lista"></div>
         </div>
       </div>
