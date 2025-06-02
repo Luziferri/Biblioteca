@@ -158,59 +158,58 @@ function carregarListas(meuEmail) {
       }
     }
 
-    // Agora carrega toda a lista normalmente
-    db.collection("animes").get().then(snapshot => {
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const id = doc.id;
+    // Agora carrega toda a lista ordenada pelo nome
+    db.collection("animes")
+      .orderBy("nome") // ← aqui garantimos a ordem alfabética pelo campo "nome"
+      .get()
+      .then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const id = doc.id;
 
-        if (filtroGenero && data.genero !== filtroGenero) return;
+          if (filtroGenero && data.genero !== filtroGenero) return;
 
-        function pegarNomeDoEmail(email) {
-          if (!email) return "";
-          const username = email.split("@")[0];
-          return username.split(/[\.\_\-\s]/)[0];
-        }
-        
-        // dentro do carregarListas, ao criar o card:
-        const nomeUsuario = pegarNomeDoEmail(data.userEmail);
-        
-        const card = `
-        <div class="anime-card" onclick="event.stopPropagation()">
-          ${data.userEmail === meuEmail ? `
-            <button class="btn-remover hidden" onclick="removerAnime('${id}')">✖️</button>
-            <button class="btn-editar hidden" onclick="editarAnime('${id}')">Editar</button>
-          ` : ""}
-      
-          ${data.imagem ? `<img src="${data.imagem}" alt="${data.nome}" />` : `<div class="sem-imagem"></div>`}
-          <h3>Nome: ${data.nome}</h3>
-      
-          <div class="detalhes-extra hidden" id="detalhes-${id}">
-            <p><strong>Categoria:</strong> ${data.categoria}</p>
-            <p><strong>Gênero:</strong> ${data.genero}</p>
-            <p><strong>Avaliação:</strong> ${gerarEstrelas(data.avaliacao)}</p>
-            <p><strong>Comentário:</strong> ${data.comentario}</p>
-            <p><strong>Capítulos:</strong> ${data.capitulos}</p>
-            <p><strong>Utilizador:</strong> ${nomeUsuario}</p>
-          </div>
-      
-          <button class="btn-expandir" onclick="toggleDetalhes('${id}')">⋯</button>
-        </div>
-      `;
-      
-      
-      
-      
+          function pegarNomeDoEmail(email) {
+            if (!email) return "";
+            const username = email.split("@")[0];
+            return username.split(/[\.\_\-\s]/)[0];
+          }
 
-        if (data.userEmail === meuEmail) {
-          minhaLista.insertAdjacentHTML("beforeend", card);
-        } else {
-          outraLista.insertAdjacentHTML("beforeend", card);
-        }
+          const nomeUsuario = pegarNomeDoEmail(data.userEmail);
+
+          const card = `
+            <div class="anime-card" onclick="event.stopPropagation()">
+              ${data.userEmail === meuEmail ? `
+                <button class="btn-remover hidden" onclick="removerAnime('${id}')">✖️</button>
+                <button class="btn-editar hidden" onclick="editarAnime('${id}')">Editar</button>
+              ` : ""}
+          
+              ${data.imagem ? `<img src="${data.imagem}" alt="${data.nome}" />` : `<div class="sem-imagem"></div>`}
+              <h3>Nome: ${data.nome}</h3>
+          
+              <div class="detalhes-extra hidden" id="detalhes-${id}">
+                <p><strong>Categoria:</strong> ${data.categoria}</p>
+                <p><strong>Gênero:</strong> ${data.genero}</p>
+                <p><strong>Avaliação:</strong> ${gerarEstrelas(data.avaliacao)}</p>
+                <p><strong>Comentário:</strong> ${data.comentario}</p>
+                <p><strong>Capítulos:</strong> ${data.capitulos}</p>
+                <p><strong>Utilizador:</strong> ${nomeUsuario}</p>
+              </div>
+          
+              <button class="btn-expandir" onclick="toggleDetalhes('${id}')">⋯</button>
+            </div>
+          `;
+
+          if (data.userEmail === meuEmail) {
+            minhaLista.insertAdjacentHTML("beforeend", card);
+          } else {
+            outraLista.insertAdjacentHTML("beforeend", card);
+          }
+        });
       });
-    });
   });
 }
+
 function toggleDetalhes(id) {
   const detalhes = document.getElementById(`detalhes-${id}`);
   detalhes.classList.toggle("hidden");
