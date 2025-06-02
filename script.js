@@ -73,20 +73,20 @@ function adicionar() {
     alert("Avaliação deve ser um número entre 0 e 5.");
     return;
   }
-  if (editandoId) {
-    const link = document.getElementById("link").value.trim();
-  
-    if (imagemFile) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const imagemBase64 = e.target.result;
-        atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario, imagem: imagemBase64, link });
-      };
-      reader.readAsDataURL(imagemFile);
-    } else {
-      atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario, link });
-    }
+if (editandoId) {
+  const link = document.getElementById("link").value.trim();
+
+  if (imagemFile) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const imagemBase64 = e.target.result;
+      atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario, imagem: imagemBase64, link });
+    };
+    reader.readAsDataURL(imagemFile);
   } else {
+    atualizarDocumento(editandoId, { nome, categoria, genero, avaliacao, comentario, link });
+  }
+} else {
     // Adicionar novo
   // Adicionar novo
 if (!imagemFile) {
@@ -152,7 +152,6 @@ function carregarListas(meuEmail) {
     minhaLista.innerHTML = "";
     outraLista.innerHTML = "";
 
-    // Mostrar/esconder botão remover tudo
     const btnRemoverTudo = document.getElementById("btn-remover-tudo");
     if (btnRemoverTudo) {
       if (snapshotUserItems.size > 0) {
@@ -162,16 +161,28 @@ function carregarListas(meuEmail) {
       }
     }
 
-    // Agora carrega toda a lista ordenada pelo nome
     db.collection("animes")
-      .orderBy("nome") // ← aqui garantimos a ordem alfabética pelo campo "nome"
+      .orderBy("nome")
       .get()
       .then(snapshot => {
+        let totalAnimes = 0;
+        let totalMangas = 0;
+        let totalAnimesOutra = 0;
+        let totalMangasOutra = 0;
+        
         snapshot.forEach(doc => {
           const data = doc.data();
           const id = doc.id;
-
+        
           if (filtroGenero && data.genero !== filtroGenero) return;
+        
+          if (data.userEmail === meuEmail) {
+            if (data.categoria === "anime") totalAnimes++;
+            if (data.categoria === "manga") totalMangas++;
+          } else {
+            if (data.categoria === "anime") totalAnimesOutra++;
+            if (data.categoria === "manga") totalMangasOutra++;
+          }
 
           function pegarNomeDoEmail(email) {
             if (!email) return "";
@@ -180,7 +191,6 @@ function carregarListas(meuEmail) {
           }
 
           const nomeUsuario = pegarNomeDoEmail(data.userEmail);
-
           const card = `
             <div class="anime-card" onclick="event.stopPropagation()">
               ${data.userEmail === meuEmail ? `
@@ -191,7 +201,6 @@ function carregarListas(meuEmail) {
               ${data.imagem ? `<img src="${data.imagem}" alt="${data.nome}" />` : `<div class="sem-imagem"></div>`}
               <h3>Nome: ${data.link ? `<a href="${data.link}" target="_blank" rel="noopener noreferrer">${data.nome}</a>` : data.nome}</h3>
 
-          
               <div class="detalhes-extra hidden" id="detalhes-${id}">
                 <p><strong>Categoria:</strong> ${data.categoria}</p>
                 <p><strong>Gênero:</strong> ${data.genero}</p>
@@ -199,7 +208,6 @@ function carregarListas(meuEmail) {
                 <p><strong>Comentário:</strong> ${data.comentario}</p>
                 <p><strong>Capítulos:</strong> ${data.capitulos}</p>
                 <p><strong>Utilizador:</strong> ${nomeUsuario}</p>
-                
               </div>
           
               <button class="btn-expandir" onclick="toggleDetalhes('${id}')">⋯</button>
@@ -212,9 +220,16 @@ function carregarListas(meuEmail) {
             outraLista.insertAdjacentHTML("beforeend", card);
           }
         });
+
+        // Atualizar as contagens na interface
+        document.getElementById("contagem-animes").textContent = totalAnimes;
+        document.getElementById("contagem-mangas").textContent = totalMangas;
+        document.getElementById("contagem-animes-outra").textContent = totalAnimesOutra;
+        document.getElementById("contagem-mangas-outra").textContent = totalMangasOutra;
       });
   });
 }
+
 
 function toggleDetalhes(id) {
   const detalhes = document.getElementById(`detalhes-${id}`);
