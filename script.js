@@ -57,6 +57,7 @@ function logout() {
 
 function adicionar() {
   const nome = document.getElementById("nome").value.trim();
+  
   const categoria = document.getElementById("categoria").value;
   const genero = document.getElementById("genero").value;
   const avaliacao = parseFloat(document.getElementById("avaliacao").value);
@@ -97,6 +98,8 @@ const reader = new FileReader();
 reader.onload = function (e) {
   const imagemBase64 = e.target.result;
 
+  const link = document.getElementById("link").value.trim();
+
   const doc = {
     nome,
     categoria,
@@ -105,8 +108,10 @@ reader.onload = function (e) {
     comentario,
     imagem: imagemBase64,
     userEmail: auth.currentUser.email,
-    capitulos: parseInt(document.getElementById("capitulos").value) || 0
+    capitulos: parseInt(document.getElementById("capitulos").value) || 0,
+    link
   };
+  
 
   db.collection("animes").add(doc)
     .then(() => {
@@ -185,7 +190,8 @@ function carregarListas(meuEmail) {
               ` : ""}
           
               ${data.imagem ? `<img src="${data.imagem}" alt="${data.nome}" />` : `<div class="sem-imagem"></div>`}
-              <h3>Nome: ${data.nome}</h3>
+              <h3>Nome: ${data.link ? `<a href="${data.link}" target="_blank" rel="noopener noreferrer">${data.nome}</a>` : data.nome}</h3>
+
           
               <div class="detalhes-extra hidden" id="detalhes-${id}">
                 <p><strong>Categoria:</strong> ${data.categoria}</p>
@@ -194,6 +200,7 @@ function carregarListas(meuEmail) {
                 <p><strong>Comentário:</strong> ${data.comentario}</p>
                 <p><strong>Capítulos:</strong> ${data.capitulos}</p>
                 <p><strong>Utilizador:</strong> ${nomeUsuario}</p>
+                
               </div>
           
               <button class="btn-expandir" onclick="toggleDetalhes('${id}')">⋯</button>
