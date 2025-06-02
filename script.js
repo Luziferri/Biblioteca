@@ -429,7 +429,8 @@ function gerarEstrelas(avaliacao) {
 
 function filtrarPorNome() {
   const termo = document.getElementById("campo-busca").value.toLowerCase();
-  const cards = document.querySelectorAll(".anime-card");
+  const minhaLista = document.getElementById("minha-lista");
+  const cards = minhaLista.querySelectorAll(".anime-card");
 
   cards.forEach(card => {
     const nome = card.querySelector("h3").textContent.toLowerCase();
