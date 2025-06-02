@@ -426,3 +426,13 @@ function gerarEstrelas(avaliacao) {
 
   return div.outerHTML;
 }
+
+function filtrarPorNome() {
+  const termo = document.getElementById("campo-busca").value.toLowerCase();
+  const cards = document.querySelectorAll(".anime-card");
+
+  cards.forEach(card => {
+    const nome = card.querySelector("h3").textContent.toLowerCase();
+    card.style.display = nome.includes(termo) ? "block" : "none";
+  });
+}
