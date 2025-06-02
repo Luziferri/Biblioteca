@@ -13,6 +13,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let editandoId = null;
+let imagemAtual = ""; // Guarda a imagem atual durante edição
 
 document.getElementById("filtro-genero").addEventListener("change", () => {
   carregarListas(auth.currentUser.email);
@@ -68,6 +69,11 @@ function adicionar() {
   if (avaliacao < 0 || avaliacao > 5 || isNaN(avaliacao)) return alert("Avaliação deve ser um número entre 0 e 5.");
 
   const salvar = (imagemBase64 = "") => {
+    if (!imagemBase64 && editandoId) {
+      // mantém a imagem atual se não foi selecionada nova imagem durante edição
+      imagemBase64 = imagemAtual;
+    }
+
     const doc = {
       nome, categoria, genero, avaliacao, comentario, imagem: imagemBase64, userEmail: auth.currentUser.email, capitulos, link
     };
@@ -80,6 +86,7 @@ function adicionar() {
       alert(editandoId ? "Atualizado com sucesso!" : "Adicionado com sucesso!");
       limparFormulario();
       editandoId = null;
+      imagemAtual = ""; // limpa imagem armazenada após salvar
       carregarListas(auth.currentUser.email);
     }).catch(e => alert("Erro: " + e.message));
   };
@@ -170,6 +177,8 @@ function editarAnime(id) {
     const data = doc.data();
 
     editandoId = id;
+    imagemAtual = data.imagem || ""; // Guarda a imagem atual para manter se não trocar
+
     document.getElementById("nome").value = data.nome;
     document.getElementById("categoria").value = data.categoria;
     document.getElementById("genero").value = data.genero;
@@ -189,6 +198,7 @@ function editarAnime(id) {
 
 function cancelarEdicao() {
   editandoId = null;
+  imagemAtual = ""; // limpa imagem atual
   limparFormulario();
   document.getElementById("form-title").innerText = "Adicionar Novo";
   document.getElementById("btn-submit").innerText = "Adicionar";
@@ -201,6 +211,7 @@ function limparFormulario() {
     const el = document.getElementById(id);
     if (el) el.value = el.type === "select-one" ? el.options[0].value : "";
   });
+  imagemAtual = ""; // limpa imagem armazenada
 }
 
 auth.onAuthStateChanged(user => {
@@ -293,8 +304,8 @@ function filtrarPorNome() {
   buscaTimeout = setTimeout(() => {
     const termo = document.getElementById("campo-busca").value.toLowerCase();
     document.querySelectorAll("#minha-lista .anime-card").forEach(card => {
-      const nome = card.querySelector("h3").textContent.toLowerCase();
-      card.style.display = nome.includes(termo) ? "block" : "none";
+      const nome = card.querySelector("h3").innerText.toLowerCase();
+      card.style.display = nome.includes(termo) ? "" : "none";
     });
   }, 300);
 }
