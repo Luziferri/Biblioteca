@@ -9,7 +9,6 @@
   --btn-remover-bg: #ef4444;
   --btn-remover-hover-bg: #b91c1c;
   --bgg: linear-gradient(to right, #f8f9fa, #e2eafc); /* modo claro */
---bgg: linear-gradient(to right, #121212, #1e1e2f); /* modo escuro */
 
   --star-color: #ddd;          /* cor do fundo das estrelas */
   --star-background: #fc0;   
@@ -27,6 +26,8 @@
   --btn-remover-bg: #f87171;
   --btn-remover-hover-bg: #b91c1c;
   --input-bg: #2a2a3d;
+    --bgg: linear-gradient(to right, #121212, #1e1e2f); /* modo escuro */
+
 }
 
 body {
@@ -110,11 +111,20 @@ button:hover {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 20px;
-  margin-top: 20px;
 }
-.anime-card .detalhes-extra.hidden {
-  display: none;
+
+.anime-card {
+  transition: all 0.3s ease;
 }
+
+.anime-card.expandido {
+  grid-column: span 1; /* Ocupa mais espaço */
+  grid-row: span 2; /* Opcional: ocupa mais altura */
+  z-index: 10; /* Traz o card para frente */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Destaque */
+}
+
+
 
 .anime-card {
   background: var(--card-bg);
@@ -125,17 +135,30 @@ button:hover {
   text-align: left;
   box-shadow: 0 5px 15px rgba(0,0,0,0.05);
   color: var(--text-color);
-
+  
+  grid-column: span 1; /* Default */
   word-wrap: break-word;       /* Quebra palavras longas */
   overflow-wrap: break-word;   /* Compatibilidade extra */
   overflow: hidden;            /* Evita estouro do conteúdo */
+  
 }
 
 
 .anime-card img {
   width: 100%;
-  height: auto;
+  height: 150px; /* Tamanho padrão para estado normal */
   border-radius: 12px;
+  object-fit: cover; /* Ajusta a imagem para caber no espaço definido */
+  transition: height 0.3s ease; /* Suaviza a transição ao expandir/recolher */
+}
+
+.anime-card.expandido img {
+  height: 300px; /* Tamanho maior para estado expandido */
+}
+
+
+.anime-card .detalhes-extra.hidden {
+  display: none;
 }
 .btn-expandir {
   display: block;
@@ -155,9 +178,7 @@ button:hover {
   color: var(--button-bg);
 }
 
-.anime-card .detalhes-extra.hidden {
-  display: none;
-}
+
 
 /* Botão remover estilizado */
 .btn-remover {
@@ -550,3 +571,5 @@ button:hover {
 .hidden {
   display: none;
 }
+
+
