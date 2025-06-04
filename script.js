@@ -166,6 +166,26 @@ function adicionar() {
   }
 }
 
+// Função para observar os cards e fechar quando saírem da área visível
+function observarCards() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const card = entry.target;
+      if (!entry.isIntersecting && card.classList.contains('expandido')) {
+        card.classList.remove('expandido');
+        card.querySelector('.detalhes-extra').classList.add('hidden');
+        card.querySelectorAll('.btn-remover, .btn-editar').forEach(btn => {
+          btn.classList.add('hidden'); // Oculta os botões
+        });
+      }
+    });
+  }, { threshold: 0.1 }); // Define o quanto do card precisa estar visível (10%)
+
+  // Seleciona todos os cards e os observa
+  document.querySelectorAll('.anime-card').forEach(card => observer.observe(card));
+}
+
+// Chame a função após carregar os cards
 function carregarListas(userEmail) {
   const loader = document.getElementById("loader");
   loader.classList.remove("hidden");
@@ -179,11 +199,10 @@ function carregarListas(userEmail) {
 
     let totalAnimes = 0, totalMangas = 0, totalAnimesOutra = 0, totalMangasOutra = 0;
 
-    // Coleta os dados e ordena por nome (caso necessário)
     const dadosOrdenados = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
       .filter(data => !filtroGenero || data.genero === filtroGenero)
-      .sort((a, b) => a.nome.localeCompare(b.nome)); // Ordena por nome
+      .sort((a, b) => a.nome.localeCompare(b.nome));
 
     dadosOrdenados.forEach(data => {
       const id = data.id;
@@ -230,6 +249,9 @@ function carregarListas(userEmail) {
     if (btnRemoverTudo) {
       btnRemoverTudo.classList.toggle("hidden", totalAnimes + totalMangas === 0);
     }
+
+    // Inicia a observação dos cards
+    observarCards();
   }).finally(() => loader.classList.add("hidden"));
 }
 
