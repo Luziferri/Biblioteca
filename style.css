@@ -139,7 +139,9 @@ button:hover {
   grid-column: span 1; /* Default */
   word-wrap: break-word;       /* Quebra palavras longas */
   overflow-wrap: break-word;   /* Compatibilidade extra */
-  overflow: hidden;            /* Evita estouro do conteúdo */
+  overflow: hidden;    
+  
+          /* Evita estouro do conteúdo */
   
 }
 
