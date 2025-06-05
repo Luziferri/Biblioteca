@@ -1,12 +1,12 @@
-const firebaseConfig = {
-  apiKey: "AIzaSyDXZKqEav9k40ojrrhZuRO2ytUSE_qrCMw",
-  authDomain: "biblioteca-d7e7f.firebaseapp.com",
-  projectId: "biblioteca-d7e7f",
-  storageBucket: "biblioteca-d7e7f.firebasestorage.app",
-  messagingSenderId: "575199720910",
-  appId: "1:575199720910:web:a5711f7258e17ae9cb679f",
-  measurementId: "G-LHD08ZQ8J7"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyBxG9YzkSMv_RFawngigcYWq_sJ-buElxQ",
+    authDomain: "bibliotecaeu-a8e28.firebaseapp.com",
+    projectId: "bibliotecaeu-a8e28",
+    storageBucket: "bibliotecaeu-a8e28.firebasestorage.app",
+    messagingSenderId: "798168137210",
+    appId: "1:798168137210:web:12a29138943c8f0dacf843",
+    measurementId: "G-FRVRZZ4J8G"
+  };
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
