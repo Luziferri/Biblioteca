@@ -21,73 +21,7 @@ document.getElementById("filtro-genero").addEventListener("change", () => {
 
 const toggleThemeBtn = document.getElementById("toggle-theme");
 
-function atualizarEmoji(tema) {function carregarListas(userEmail) {
-  const loader = document.getElementById("loader");
-  loader.classList.remove("hidden");
-
-  const filtroGenero = document.getElementById("filtro-genero").value;
-  db.collection("animes").orderBy("nome").get().then(snapshot => {
-    const minhaLista = document.getElementById("minha-lista");
-    const outraLista = document.getElementById("outra-lista");
-    minhaLista.innerHTML = "";
-    outraLista.innerHTML = "";
-
-    let totalAnimes = 0, totalMangas = 0, totalAnimesOutra = 0, totalMangasOutra = 0;
-
-    // Coleta os dados e ordena por nome (caso necessário)
-    const dadosOrdenados = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(data => !filtroGenero || data.genero === filtroGenero)
-      .sort((a, b) => a.nome.localeCompare(b.nome)); // Ordena por nome
-
-    dadosOrdenados.forEach(data => {
-      const id = data.id;
-      const minha = data.userEmail === userEmail;
-
-      if (minha) {
-        if (data.categoria === "anime") totalAnimes++;
-        if (data.categoria === "manga") totalMangas++;
-      } else {
-        if (data.categoria === "anime") totalAnimesOutra++;
-        if (data.categoria === "manga") totalMangasOutra++;
-      }
-
-      const nomeUsuario = (data.userEmail.split("@")[0] || "").split(/[\.\_\-\s]/)[0];
-      const card = `
-        <div class="anime-card" onclick="event.stopPropagation()">
-          ${minha ? `
-            <button class="btn-remover hidden" onclick="removerAnime('${id}')">✖️</button>
-            <button class="btn-editar hidden" onclick="editarAnime('${id}')">Editar</button>
-          ` : ""}
-          ${data.imagem ? `<img src="${data.imagem}" alt="${data.nome}" />` : `<div class="sem-imagem"></div>`}
-          <h3>Nome: ${data.link ? `<a href="${data.link}" target="_blank">${data.nome}</a>` : data.nome}</h3>
-          <div class="detalhes-extra hidden" id="detalhes-${id}">
-            <p><strong>Categoria:</strong> ${data.categoria}</p>
-            <p><strong>Gênero:</strong> ${data.genero}</p>
-            <p><strong>Avaliação:</strong> ${gerarEstrelas(data.avaliacao)}</p>
-            <p><strong>Comentário:</strong> ${data.comentario}</p>
-            <p><strong>Capítulos:</strong> ${data.capitulos}</p>
-            <p><strong>Utilizador:</strong> ${nomeUsuario}</p>
-          </div>
-          <button class="btn-expandir" onclick="toggleDetalhes('${id}')">⋯</button>
-        </div>
-      `;
-
-      (minha ? minhaLista : outraLista).insertAdjacentHTML("beforeend", card);
-    });
-
-    document.getElementById("contagem-animes").textContent = totalAnimes;
-    document.getElementById("contagem-mangas").textContent = totalMangas;
-    document.getElementById("contagem-animes-outra").textContent = totalAnimesOutra;
-    document.getElementById("contagem-mangas-outra").textContent = totalMangasOutra;
-
-    const btnRemoverTudo = document.getElementById("btn-remover-tudo");
-    if (btnRemoverTudo) {
-      btnRemoverTudo.classList.toggle("hidden", totalAnimes + totalMangas === 0);
-    }
-  }).finally(() => loader.classList.add("hidden"));
-}
-  toggleThemeBtn.textContent = tema === "dark" ? "☀️" : "🌙";
+function atualizarEmoji(tema) {  toggleThemeBtn.textContent = tema === "dark" ? "☀️" : "🌙";
 }
 
 toggleThemeBtn.addEventListener("click", () => {
@@ -428,4 +362,3 @@ function filtrarPorNome() {
     });
   }, 300);
 }
-
