@@ -1,12 +1,12 @@
-  const firebaseConfig = {
-    apiKey: "AIzaSyBxG9YzkSMv_RFawngigcYWq_sJ-buElxQ",
-    authDomain: "bibliotecaeu-a8e28.firebaseapp.com",
-    projectId: "bibliotecaeu-a8e28",
-    storageBucket: "bibliotecaeu-a8e28.firebasestorage.app",
-    messagingSenderId: "798168137210",
-    appId: "1:798168137210:web:12a29138943c8f0dacf843",
-    measurementId: "G-FRVRZZ4J8G"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyBxG9YzkSMv_RFawngigcYWq_sJ-buElxQ",
+  authDomain: "bibliotecaeu-a8e28.firebaseapp.com",
+  projectId: "bibliotecaeu-a8e28",
+  storageBucket: "bibliotecaeu-a8e28.firebasestorage.app",
+  messagingSenderId: "798168137210",
+  appId: "1:798168137210:web:12a29138943c8f0dacf843",
+  measurementId: "G-FRVRZZ4J8G"
+};
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -186,12 +186,18 @@ function observarCards() {
 }
 
 // Chame a função após carregar os cards
+let cachedData = []; // Cache for storing fetched data
+
 function carregarListas(userEmail) {
   const loader = document.getElementById("loader");
   loader.classList.remove("hidden");
 
   const filtroGenero = document.getElementById("filtro-genero").value;
-  db.collection("animes").orderBy("nome").get().then(snapshot => {
+
+  // Use onSnapshot to listen for real-time updates
+  db.collection("animes").orderBy("nome").onSnapshot(snapshot => {
+    cachedData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); // Cache the data
+
     const minhaLista = document.getElementById("minha-lista");
     const outraLista = document.getElementById("outra-lista");
     minhaLista.innerHTML = "";
@@ -199,8 +205,8 @@ function carregarListas(userEmail) {
 
     let totalAnimes = 0, totalMangas = 0, totalAnimesOutra = 0, totalMangasOutra = 0;
 
-    const dadosOrdenados = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
+    // Filter and sort data locally
+    const dadosOrdenados = cachedData
       .filter(data => !filtroGenero || data.genero === filtroGenero)
       .sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -252,7 +258,8 @@ function carregarListas(userEmail) {
 
     // Inicia a observação dos cards
     observarCards();
-  }).finally(() => loader.classList.add("hidden"));
+    loader.classList.add("hidden");
+  });
 }
 
 function removerAnime(id) {
@@ -421,3 +428,4 @@ function filtrarPorNome() {
     });
   }, 300);
 }
+
