@@ -135,8 +135,7 @@ function adicionar() {
 
   const salvar = (imagemBase64 = "") => {
     if (!imagemBase64 && editandoId) {
-      // mantém a imagem atual se não foi selecionada nova imagem durante edição
-      imagemBase64 = imagemAtual;
+      imagemBase64 = imagemAtual; // mantém a imagem atual se não foi selecionada nova imagem durante edição
     }
 
     const doc = {
@@ -153,6 +152,7 @@ function adicionar() {
       editandoId = null;
       imagemAtual = ""; // limpa imagem armazenada após salvar
       carregarListas(auth.currentUser.email);
+      document.getElementById("formulario-adicionar").classList.add("hidden"); // Fecha o formulário de edição
     }).catch(e => alert("Erro: " + e.message));
   };
 
