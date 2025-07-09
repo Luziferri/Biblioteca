@@ -1,3 +1,4 @@
+
 const firebaseConfig = {
   apiKey: "AIzaSyBxG9YzkSMv_RFawngigcYWq_sJ-buElxQ",
   authDomain: "bibliotecaeu-a8e28.firebaseapp.com",
@@ -14,7 +15,7 @@ const db = firebase.firestore();
 
 let editandoId = null;
 let imagemAtual = "";
-let outraListaExpandida = localStorage.getItem('outraListaExpandida') === 'true' || false;
+let outraListaExpandida = false;
 
 // Variáveis para controle dos listeners
 let unsubscribeUser = null;
@@ -27,50 +28,55 @@ document.getElementById("filtro-genero").addEventListener("change", () => {
   carregarListas(auth.currentUser.email);
 });
 
-const toggleThemeBtn = document.getElementById("toggle-theme");
+const toggleCheckbox = document.querySelector(".theme-switch__checkbox");
 
-function atualizarEmoji(tema) {  
-  toggleThemeBtn.textContent = tema === "dark" ? "☀️" : "🌙";
+function aplicarTema(tema) {
+  document.documentElement.setAttribute("data-theme", tema);
+  localStorage.setItem("tema", tema);
+  // Atualiza a posição do checkbox visualmente
+  toggleCheckbox.checked = tema === "dark";
 }
 
-toggleThemeBtn.addEventListener("click", () => {
-  const atual = document.documentElement.getAttribute("data-theme");
-  const novoTema = atual === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", novoTema);
-  localStorage.setItem("tema", novoTema);
-  atualizarEmoji(novoTema);
+// Evento de troca
+toggleCheckbox.addEventListener("change", () => {
+  const novoTema = toggleCheckbox.checked ? "dark" : "light";
+  aplicarTema(novoTema);
 });
+
+// Verifica tema salvo ao carregar
+document.addEventListener("DOMContentLoaded", () => {
+  const temaSalvo = localStorage.getItem("tema") || "light";
+  aplicarTema(temaSalvo);
+});
+
 
 // Função para atualizar a visibilidade da lista de outros
 function atualizarVisibilidadeOutraLista() {
   const outraListaElement = document.getElementById('outra-lista');
-  const toggleIcon = document.getElementById('toggle-icon');
+  const toggleCheckbox = document.getElementById('toggle-outra-lista');
   
-  if (outraListaExpandida) {
+  if (toggleCheckbox.checked) {
     outraListaElement.classList.remove('hidden');
-    toggleIcon.textContent = '▼';
   } else {
     outraListaElement.classList.add('hidden');
-    toggleIcon.textContent = '▶';
   }
 }
 
 // Evento para alternar a visibilidade da lista de outros
-document.getElementById('toggle-outra-lista').addEventListener('click', () => {
-  outraListaExpandida = !outraListaExpandida;
+document.getElementById('toggle-outra-lista').addEventListener('change', () => {
+  const toggleCheckbox = document.getElementById('toggle-outra-lista');
+  const outraListaExpandida = toggleCheckbox.checked;
+
   localStorage.setItem('outraListaExpandida', outraListaExpandida.toString());
   atualizarVisibilidadeOutraLista();
 
   if (outraListaExpandida) {
-    // Se já temos dados em cache, use-os
     if (cachedOtherData.length > 0) {
       processarListaOutros(cachedOtherData);
     } else {
-      // Senão, carregue do Firebase
       carregarListaOutros(currentUserEmail);
     }
   } else {
-    // Ao recolher, destrua o listener para evitar leituras
     if (unsubscribeOthers) {
       unsubscribeOthers();
       unsubscribeOthers = null;
@@ -78,12 +84,13 @@ document.getElementById('toggle-outra-lista').addEventListener('click', () => {
   }
 });
 
+
 window.onload = () => {
   const temaSalvo = localStorage.getItem("tema") || "light";
   document.documentElement.setAttribute("data-theme", temaSalvo);
-  atualizarEmoji(temaSalvo);
   
   // Inicializa visibilidade da lista de outros
+  outraListaExpandida = false;
   atualizarVisibilidadeOutraLista();
 };
 
@@ -432,7 +439,8 @@ auth.onAuthStateChanged(user => {
     document.getElementById("user-email").innerText = user.email;
     carregarListas(user.email);
     
-    // Inicializa visibilidade da lista de outros
+    // Force the other list to be collapsed initially
+    outraListaExpandida = false;
     atualizarVisibilidadeOutraLista();
   } else {
     document.getElementById("login").classList.remove("hidden");
@@ -443,6 +451,7 @@ auth.onAuthStateChanged(user => {
     if (unsubscribeOthers) unsubscribeOthers();
   }
 });
+
 
 function toggleFormulario() {
   document.getElementById("formulario-adicionar").classList.toggle("hidden");
