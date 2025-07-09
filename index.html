@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="pt-pt">
 <head>
@@ -37,7 +34,6 @@
         <h1>Biblioteca de Animes & Mangas</h1>
         
         <div class="header-actions">
-          
           <button onclick="toggleFormulario()">Adicionar Titulos</button>
           <button onclick="toggleImportarLista()">Importar Lista</button>
         </div>
@@ -58,7 +54,7 @@
           <option value="anime">Anime</option>
           <option value="manga">Mangá</option>
         </select>
-        <!-- Gênero (copiado do original) -->
+
         <select id="genero">
           <option value="">-- Selecione o gênero --</option>
           <option value="Ação / Action">Ação / Action</option>
@@ -116,11 +112,20 @@
           <option value="Yuri / Yuri">Yuri / Yuri</option>
         </select>
 
+
         <label for="avaliacao"></label>
         <input type="number" id="avaliacao" min="0" max="5" step="0.1" placeholder="Avaliação (0-5)" />
         <input type="text" id="comentario" placeholder="Comentário" />
         <input type="number" id="capitulos" placeholder="Capítulos" min="0" />
         <input type="file" id="imagemFile" accept="image/*" />
+
+        <!-- Novo select para status de leitura -->
+        <label for="statusLeitura">Status da Leitura:</label>
+        <select id="statusLeitura" required>
+          <option value="lido">Lido</option>
+          <option value="porLer">Por Ler</option>
+        </select>
+
         <button id="btn-submit" onclick="adicionar()">Adicionar</button>
         <button id="btn-cancelar" class="hidden" onclick="cancelarEdicao()">Cancelar</button>
       </div>
@@ -199,28 +204,34 @@
       <!-- Listas -->
       <div class="listas">
         <input type="text" id="campo-busca" placeholder="Buscar por nome..." oninput="filtrarPorNome()" />
+
+  
         <div class="card">
           <h2>
-            Lista de: <span id="user-email"></span> 
-            (<span id="contagem-animes"></span> animes, <span id="contagem-mangas"></span> mangas)
+            Lidos - <span id="user-email"></span> 
+            (<span id="contagem-animes-lidos"></span> animes, <span id="contagem-mangas-lidos"></span> mangas)
           </h2>
-                  
-          <!--<button id="btn-remover-tudo" class="hidden" onclick="removerTudo()">Remover Tudo</button> -->
-          <div id="minha-lista" class="lista"></div>
+          <div id="lista-lidos" class="lista"></div>
         </div>
-
+        
         <div class="card">
-          <h2>👥 Lista de Outro Utilizador</h2>
-          (<span id="contagem-animes-outra"></span> animes, <span id="contagem-mangas-outra"></span> mangas)
-
-          <div id="outra-lista" class="lista"></div>
+          <h2>
+            Por Ler - <span id="user-email"></span> 
+            (<span id="contagem-animes-por-ler"></span> animes, <span id="contagem-mangas-por-ler"></span> mangas)
+          </h2>
+          <div id="lista-por-ler" class="lista"></div>
         </div>
 
-        <div class="anime-card" id="card-${id}">
-          <div class="detalhes-extra hidden" id="detalhes-${id}">
-            <!-- Detalhes do card -->
-          </div>
-        </div>
+      <div class="card">
+  <h2>
+    <button id="toggle-outra-lista" class="btn-toggle">
+      👥 Lista de Outro Utilizador
+      <span id="toggle-icon">▼</span>
+    </button>
+    (<span id="contagem-animes-outra"></span> animes, <span id="contagem-mangas-outra"></span> mangas)
+  </h2>
+  <div id="outra-lista" class="lista"></div>
+</div>
       </div>
     </div>
   </div>
