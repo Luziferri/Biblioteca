@@ -103,8 +103,8 @@ function carregarListaUsuario(userEmail) {
 
   let query = db.collection("animes")
   .where("userEmail", "==", userEmail)
-  .orderBy("userEmail") // Add this line
   .orderBy("nome");
+
 
   const filtroGenero = document.getElementById("filtro-genero").value;
   if (filtroGenero) {
@@ -132,9 +132,10 @@ function carregarListaOutros(userEmail) {
   loader.classList.remove("hidden"); // Exiba o carregamento de tela
 
   let query = db.collection("animes")
-    .where("userEmail", "!=", userEmail)
-    .orderBy("userEmail") // Add this line
-    .orderBy("nome");
+  .where("userEmail", "!=", userEmail)
+  .orderBy("userEmail") // Necessário por causa do "!="
+  .orderBy("nome");     // Pode vir depois
+
 
   const filtroGenero = document.getElementById("filtro-genero").value;
   if (filtroGenero) {
@@ -168,6 +169,9 @@ function processarListaUsuario(dados) {
   
   listaLidos.innerHTML = "";
   listaPorLer.innerHTML = "";
+
+  dados.sort((a, b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
+
 
   let totalAnimesPorLer = 0, totalMangasPorLer = 0, 
       totalAnimesLidos = 0, totalMangasLidos = 0;
@@ -206,6 +210,8 @@ function processarListaOutros(dados) {
   const outraLista = document.getElementById("outra-lista");
   outraLista.innerHTML = "";
 
+  dados.sort((a, b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
+
   let totalAnimesOutra = 0, totalMangasOutra = 0;
 
   dados.forEach(data => {
@@ -237,7 +243,7 @@ function criarCard(data, id, minha) {
       <div class="detalhes-extra hidden" id="detalhes-${id}">
         <p><strong>Categoria:</strong> ${data.categoria}</p>
         <p><strong>Gênero:</strong> ${data.genero}</p>
-        <p><strong>Status:</strong> ${data.statusLeitura === "lido" ? "Lido" : "Por Ler"}</p>
+<p><strong>Status:</strong> ${data.statusLeitura?.toLowerCase() === "lido" ? "Lido" : "Por Ler"}</p>
         <p><strong>Avaliação:</strong> ${gerarEstrelas(data.avaliacao)}</p>
         <p><strong>Comentário:</strong> ${data.comentario}</p>
         <p><strong>Capítulos:</strong> ${data.capitulos}</p>
@@ -524,3 +530,5 @@ window.addEventListener('beforeunload', () => {
   if (unsubscribeUser) unsubscribeUser();
   if (unsubscribeOthers) unsubscribeOthers();
 });
+
+
