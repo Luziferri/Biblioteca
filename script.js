@@ -3,7 +3,6 @@ const firebaseConfig = {
   apiKey: "AIzaSyBxG9YzkSMv_RFawngigcYWq_sJ-buElxQ",
   authDomain: "bibliotecaeu-a8e28.firebaseapp.com",
   projectId: "bibliotecaeu-a8e28",
-  storageBucket: "bibliotecaeu-a8e28.appspot.com",
   messagingSenderId: "798168137210",
   appId: "1:798168137210:web:12a29138943c8f0dacf843",
   measurementId: "G-FRVRZZ4J8G"
